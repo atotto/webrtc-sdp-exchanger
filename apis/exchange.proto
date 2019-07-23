@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package apis;
+option go_package = "apis";
+
+import "google/api/annotations.proto";
+
+service ExchangeService {
+    rpc CreateSession (CreateSessionRequest) returns (CreateSessionResponse) {
+        option (google.api.http) = {
+            post: "/sessions/{session_id}"
+            body: "*"
+        };
+    }
+    rpc GetSessionAnswer (GetSessionRequest) returns (GetSessionResponse) {
+        option (google.api.http) = {
+            get: "/sessions/{session_id}/answer"
+        };
+    }
+    rpc GetSessionOffer (GetSessionRequest) returns (GetSessionResponse) {
+        option (google.api.http) = {
+            get: "/sessions/{session_id}/offer"
+        };
+    }
+}
+
+message CreateSessionRequest {
+    SessionDescription session_description = 1;
+    string session_id = 2;
+}
+
+message CreateSessionResponse {
+}
+
+message GetSessionRequest {
+    string session_id = 2;
+}
+
+message GetSessionResponse {
+    SessionDescription session_description = 1;
+}
+
+
+message SessionDescription {
+    string type = 1;
+    string sdp = 2;
+}
