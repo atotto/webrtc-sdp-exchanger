@@ -11,6 +11,7 @@ require (
 	github.com/golang/protobuf v1.3.1
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.9.5
+	github.com/rs/cors v1.6.0
 	go.opencensus.io v0.22.0
 	google.golang.org/api v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20190502173448-54afdca5d873

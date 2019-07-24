@@ -16,6 +16,7 @@ import (
 	"github.com/atotto/webrtc-sdp-exchanger/apis"
 	"github.com/atotto/webrtc-sdp-exchanger/service"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/rs/cors"
 	"go.opencensus.io/plugin/ocgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -73,9 +74,18 @@ func main() {
 		log.Printf("Defaulting to port %s", port)
 	}
 
+	handler := cors.New(cors.Options{
+		AllowedMethods: []string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE"},
+		AllowedOrigins: []string{
+			"https://*",
+		},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowCredentials: true,
+	}).Handler(mux)
+
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
-		Handler: mux,
+		Handler: handler,
 	}
 
 	log.Printf("Listening on port %s", port)
