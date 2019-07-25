@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"cloud.google.com/go/firestore"
 	"github.com/atotto/webrtc-sdp-exchanger/apis"
@@ -25,54 +24,38 @@ func NewExchangeService(fsClient *firestore.Client) *ExchangeService {
 }
 
 func (s *ExchangeService) CreateSession(ctx context.Context, req *apis.CreateSessionRequest) (*apis.CreateSessionResponse, error) {
-	switch req.SessionDescription.Type {
-	case "offer":
-		s.sessionCollection.Doc(session(req.SessionId, "answer")).Delete(ctx)
-	case "answer":
-		s.sessionCollection.Doc(session(req.SessionId, "offer")).Delete(ctx)
-	default:
-		return nil, status.Errorf(codes.InvalidArgument, "unknown SDP Type: %s", req.SessionDescription.Type)
-	}
-	s.sessionCollection.Doc(session(req.SessionId, req.SessionDescription.Type)).Set(ctx, req)
+	s.sessionCollection.Doc(req.SessionId).Set(ctx, req)
 	return &apis.CreateSessionResponse{}, nil
 }
 
 func (s *ExchangeService) GetSessionAnswer(ctx context.Context, req *apis.GetSessionRequest) (*apis.GetSessionResponse, error) {
-	res := &apis.GetSessionResponse{}
-	ss, err := s.sessionCollection.Doc(session(req.SessionId, "answer")).Get(ctx)
-	if err != nil {
-		if status.Code(err) == codes.NotFound {
-			return res, nil
-		}
-		return nil, status.Error(codes.Internal, "failed to get session")
-	}
-	if err := ss.DataTo(res); err != nil {
-		return nil, status.Error(codes.Internal, "failed to read session")
-	}
-	return res, nil
+	return s.GetSession(ctx, req, "answer")
 }
 
 func (s *ExchangeService) GetSessionOffer(ctx context.Context, req *apis.GetSessionRequest) (*apis.GetSessionResponse, error) {
-	res := &apis.GetSessionResponse{}
-	ss, err := s.sessionCollection.Doc(session(req.SessionId, "offer")).Get(ctx)
+	return s.GetSession(ctx, req, "offer")
+}
+
+func (s *ExchangeService) GetSession(ctx context.Context, req *apis.GetSessionRequest, sdpType string) (*apis.GetSessionResponse, error) {
+	ss, err := s.sessionCollection.Doc(req.SessionId).Get(ctx)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
-			return res, nil
+			return nil, status.Error(codes.NotFound, "no data")
 		}
 		return nil, status.Error(codes.Internal, "failed to get session")
 	}
+	res := &apis.GetSessionResponse{}
 	if err := ss.DataTo(res); err != nil {
 		return nil, status.Error(codes.Internal, "failed to read session")
 	}
+	if res.SessionDescription.GetType() != sdpType {
+		return nil, status.Error(codes.NotFound, "no data")
+	}
+
 	return res, nil
 }
 
 func (s *ExchangeService) DeleteSession(ctx context.Context, req *apis.DeleteSessionRequest) (*apis.DeleteSessionResponse, error) {
-	s.sessionCollection.Doc(session(req.SessionId, "answer")).Delete(ctx)
-	s.sessionCollection.Doc(session(req.SessionId, "offer")).Delete(ctx)
+	s.sessionCollection.Doc(req.SessionId).Delete(ctx)
 	return &apis.DeleteSessionResponse{}, nil
-}
-
-func session(sessionID string, sdpType string) string {
-	return fmt.Sprintf("%s-%s", sessionID, sdpType)
 }
