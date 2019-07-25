@@ -22,6 +22,11 @@ service ExchangeService {
             get: "/sessions/{session_id}/offer"
         };
     }
+    rpc DeleteSession (DeleteSessionRequest) returns (DeleteSessionResponse) {
+        option (google.api.http) = {
+            delete: "/sessions/{session_id}"
+        };
+    }
 }
 
 message CreateSessionRequest {
@@ -38,6 +43,13 @@ message GetSessionRequest {
 
 message GetSessionResponse {
     SessionDescription session_description = 1;
+}
+
+message DeleteSessionRequest {
+    string session_id = 2;
+}
+
+message DeleteSessionResponse {
 }
 
 
