@@ -1,1 +1,9 @@
 runtime: go112
+
+handlers:
+- url: /example/app/
+  static_files: example/app/index.html
+  upload: example/app/(.*)
+
+- url: /.*
+  script: auto
