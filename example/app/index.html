@@ -27,6 +27,11 @@
         document.getElementById('remoteVideos').appendChild(el)
     };
 
+    let dataChannel = pc.createDataChannel('foo');
+    dataChannel.onclose = () => console.log('dataChannel has closed');
+    dataChannel.onopen = () => console.log('dataChannel has opened');
+    dataChannel.onmessage = e => log(`Message from DataChannel '${dataChannel.label}' payload '${e.data}'`);
+
     const session_id = "abc";
 
     pc.oniceconnectionstatechange = e => log(pc.iceConnectionState);
@@ -65,9 +70,23 @@
                 alert(e);
             }
         }).catch(err=>console.error);
-    }
+    };
+
+    window.sendCommand = () => {
+        let message = document.getElementById('command').value;
+        if (message === '') {
+            return;
+        }
+
+        dataChannel.send(message);
+    };
 </script>
+<textarea id="sessionId">test</textarea> <br/>
 <button onclick="window.startSession()"> Start Session</button>
+<br/>
+
+Command: <textarea id="command"></textarea> <br/>
+<button onclick="window.sendCommand()"> Send Command</button>
 <br/>
 
 <br/>
