@@ -79,23 +79,38 @@
         }
 
         dataChannel.send(message);
+        document.getElementById('command').value = "";
     };
 </script>
+<div>
 <textarea id="sessionId">test</textarea> <br/>
 <button onclick="window.startSession()"> Start Session</button>
-<br/>
+</div>
 
+<div>
 Command: <textarea id="command"></textarea> <br/>
-<button onclick="window.sendCommand()"> Send Command</button>
-<br/>
+<button id="sendCommand" onclick="window.sendCommand()"> Send Command</button>
+</div>
 
 <br/>
 
-Video<br/>
+<div>Video<br/>
 <div id="remoteVideos"></div>
-<br/>
+</div>
 
+<div>
 Logs<br/>
 <div id="div"></div>
+</div>
+
+<script>
+    document.getElementById('command').addEventListener('keypress', (event) => {
+        console.log(event);
+        if (event.key === 'Enter') {
+            document.getElementById('sendCommand').click();
+            return false
+        }
+    });
+</script>
 </body>
 </html>
