@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -52,31 +53,53 @@ func GetSessionOffer(ctx context.Context, sessionID string) (*webrtc.SessionDesc
 }
 
 func getSession(ctx context.Context, sessionID string, sdpType webrtc.SDPType) (*webrtc.SessionDescription, error) {
-	res := sessionResponse{}
 	for {
-		resp, err := http.Get(fmt.Sprintf("https://webrtc-sdp-exchanger.appspot.com/sessions/%s/%s", sessionID, sdpType.String()))
+		res, err := getSession2(ctx, sessionID, sdpType)
 		if err != nil {
-			return nil, fmt.Errorf("http get: %s", err)
-		}
-		if resp.StatusCode != http.StatusOK {
-			//return nil, fmt.Errorf("invalid status: %s", resp.Status)
-			resp.Body.Close()
-			continue
+			return nil, err
 		}
 
-		if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-			resp.Body.Close()
-			continue
+		// retry
+		if res == nil {
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(3 * time.Second):
+			}
 		}
-
-		if res.SessionDescription != nil {
-			return res.SessionDescription, nil
-		}
-
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		case <-time.After(3 * time.Second):
-		}
+		return res, nil
 	}
+}
+
+func getSession2(ctx context.Context, sessionID string, sdpType webrtc.SDPType) (*webrtc.SessionDescription, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://webrtc-sdp-exchanger.appspot.com/sessions/%s/%s", sessionID, sdpType.String()), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.WithContext(ctx)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("http get: %s", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode != http.StatusNotFound {
+			b, _ := ioutil.ReadAll(resp.Body)
+			return nil, fmt.Errorf("invalid status %s: %s", resp.Status, string(b))
+		}
+		return nil, nil
+	}
+
+	res := sessionResponse{}
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		return nil, nil
+	}
+
+	if res.SessionDescription == nil {
+		return nil, fmt.Errorf("not found: session_description")
+	}
+
+	return res.SessionDescription, nil
 }

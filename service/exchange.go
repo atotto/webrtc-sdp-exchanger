@@ -2,10 +2,15 @@ package service
 
 import (
 	"context"
+	"log"
+	"net/http"
+	"time"
 
 	"cloud.google.com/go/firestore"
 	"github.com/atotto/webrtc-sdp-exchanger/apis"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -42,9 +47,23 @@ func (s *ExchangeService) GetSession(ctx context.Context, req *apis.GetSessionRe
 		if status.Code(err) == codes.NotFound {
 			return nil, status.Error(codes.NotFound, "no data")
 		}
+		log.Print(err)
 		return nil, status.Error(codes.Internal, "failed to get session")
 	}
+
+	var modifiedSince time.Time
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if m := md.Get(runtime.MetadataPrefix + "If-Modified-Since"); len(m) > 0 {
+			modifiedSince, _ = time.Parse(http.TimeFormat, m[0])
+		}
+	}
+
 	res := &apis.GetSessionResponse{}
+
+	if !modifiedSince.Before(ss.UpdateTime) {
+		return nil, status.Error(codes.NotFound, "not modified")
+	}
+
 	if err := ss.DataTo(res); err != nil {
 		return nil, status.Error(codes.Internal, "failed to read session")
 	}

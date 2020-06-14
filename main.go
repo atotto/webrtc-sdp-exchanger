@@ -65,7 +65,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	mux := runtime.NewServeMux()
+	mux := runtime.NewServeMux(
+		runtime.WithIncomingHeaderMatcher(runtime.DefaultHeaderMatcher),
+	)
 	apis.RegisterExchangeServiceHandler(ctx, mux, conn)
 
 	port := os.Getenv("PORT")

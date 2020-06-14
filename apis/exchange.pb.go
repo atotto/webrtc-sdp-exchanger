@@ -9,8 +9,6 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
-	codes "google.golang.org/grpc/codes"
-	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -406,23 +404,6 @@ type ExchangeServiceServer interface {
 	GetSessionAnswer(context.Context, *GetSessionRequest) (*GetSessionResponse, error)
 	GetSessionOffer(context.Context, *GetSessionRequest) (*GetSessionResponse, error)
 	DeleteSession(context.Context, *DeleteSessionRequest) (*DeleteSessionResponse, error)
-}
-
-// UnimplementedExchangeServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedExchangeServiceServer struct {
-}
-
-func (*UnimplementedExchangeServiceServer) CreateSession(ctx context.Context, req *CreateSessionRequest) (*CreateSessionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateSession not implemented")
-}
-func (*UnimplementedExchangeServiceServer) GetSessionAnswer(ctx context.Context, req *GetSessionRequest) (*GetSessionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSessionAnswer not implemented")
-}
-func (*UnimplementedExchangeServiceServer) GetSessionOffer(ctx context.Context, req *GetSessionRequest) (*GetSessionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSessionOffer not implemented")
-}
-func (*UnimplementedExchangeServiceServer) DeleteSession(ctx context.Context, req *DeleteSessionRequest) (*DeleteSessionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteSession not implemented")
 }
 
 func RegisterExchangeServiceServer(s *grpc.Server, srv ExchangeServiceServer) {

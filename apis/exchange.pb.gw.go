@@ -266,13 +266,13 @@ func RegisterExchangeServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_ExchangeService_CreateSession_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"sessions", "session_id"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_ExchangeService_CreateSession_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"sessions", "session_id"}, ""))
 
-	pattern_ExchangeService_GetSessionAnswer_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 2, 2}, []string{"sessions", "session_id", "answer"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_ExchangeService_GetSessionAnswer_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 2, 2}, []string{"sessions", "session_id", "answer"}, ""))
 
-	pattern_ExchangeService_GetSessionOffer_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 2, 2}, []string{"sessions", "session_id", "offer"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_ExchangeService_GetSessionOffer_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 2, 2}, []string{"sessions", "session_id", "offer"}, ""))
 
-	pattern_ExchangeService_DeleteSession_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"sessions", "session_id"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_ExchangeService_DeleteSession_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"sessions", "session_id"}, ""))
 )
 
 var (
