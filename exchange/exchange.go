@@ -45,16 +45,16 @@ func CreateSession(ctx context.Context, offer *webrtc.SessionDescription, sessio
 }
 
 func GetSessionAnswer(ctx context.Context, sessionID string) (*webrtc.SessionDescription, error) {
-	return getSession(ctx, sessionID, webrtc.SDPTypeAnswer)
+	return getSessionWithRetry(ctx, sessionID, webrtc.SDPTypeAnswer)
 }
 
 func GetSessionOffer(ctx context.Context, sessionID string) (*webrtc.SessionDescription, error) {
-	return getSession(ctx, sessionID, webrtc.SDPTypeOffer)
+	return getSessionWithRetry(ctx, sessionID, webrtc.SDPTypeOffer)
 }
 
-func getSession(ctx context.Context, sessionID string, sdpType webrtc.SDPType) (*webrtc.SessionDescription, error) {
+func getSessionWithRetry(ctx context.Context, sessionID string, sdpType webrtc.SDPType) (*webrtc.SessionDescription, error) {
 	for {
-		res, err := getSession2(ctx, sessionID, sdpType)
+		res, err := getSession(ctx, sessionID, sdpType)
 		if err != nil {
 			return nil, err
 		}
@@ -71,7 +71,7 @@ func getSession(ctx context.Context, sessionID string, sdpType webrtc.SDPType) (
 	}
 }
 
-func getSession2(ctx context.Context, sessionID string, sdpType webrtc.SDPType) (*webrtc.SessionDescription, error) {
+func getSession(ctx context.Context, sessionID string, sdpType webrtc.SDPType) (*webrtc.SessionDescription, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://webrtc-sdp-exchanger.appspot.com/sessions/%s/%s", sessionID, sdpType.String()), nil)
 	if err != nil {
 		return nil, err

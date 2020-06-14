@@ -2,15 +2,10 @@ package service
 
 import (
 	"context"
-	"log"
-	"net/http"
-	"time"
 
 	"cloud.google.com/go/firestore"
 	"github.com/atotto/webrtc-sdp-exchanger/apis"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -42,33 +37,31 @@ func (s *ExchangeService) GetSessionOffer(ctx context.Context, req *apis.GetSess
 }
 
 func (s *ExchangeService) GetSession(ctx context.Context, req *apis.GetSessionRequest, sdpType string) (*apis.GetSessionResponse, error) {
-	ss, err := s.sessionCollection.Doc(req.SessionId).Get(ctx)
-	if err != nil {
-		if status.Code(err) == codes.NotFound {
-			return nil, status.Error(codes.NotFound, "no data")
-		}
-		log.Print(err)
-		return nil, status.Error(codes.Internal, "failed to get session")
-	}
-
-	var modifiedSince time.Time
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		if m := md.Get(runtime.MetadataPrefix + "If-Modified-Since"); len(m) > 0 {
-			modifiedSince, _ = time.Parse(http.TimeFormat, m[0])
-		}
-	}
+	iter := s.sessionCollection.Doc(req.SessionId).Snapshots(ctx)
+	defer iter.Stop()
 
 	res := &apis.GetSessionResponse{}
-
-	if !modifiedSince.Before(ss.UpdateTime) {
-		return nil, status.Error(codes.NotFound, "not modified")
-	}
-
-	if err := ss.DataTo(res); err != nil {
-		return nil, status.Error(codes.Internal, "failed to read session")
-	}
-	if res.SessionDescription.GetType() != sdpType {
-		return nil, status.Error(codes.NotFound, "no data")
+	for {
+		docsnap, err := iter.Next()
+		if err != nil {
+			if status.Code(err) == codes.NotFound {
+				return nil, status.Error(codes.NotFound, "no data")
+			}
+			if err == context.Canceled {
+				return nil, nil
+			}
+			return nil, status.Error(codes.Internal, "failed to get session")
+		}
+		if !docsnap.Exists() {
+			continue
+		}
+		if err := docsnap.DataTo(res); err != nil {
+			return nil, status.Error(codes.Internal, "failed to read session")
+		}
+		if res.SessionDescription.GetType() != sdpType {
+			continue
+		}
+		break
 	}
 
 	return res, nil
