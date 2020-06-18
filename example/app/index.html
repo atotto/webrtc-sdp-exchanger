@@ -7,103 +7,111 @@
 
 <body>
 <script>
+    let pc = new RTCPeerConnection({
+        iceServers: [
+            {
+                urls: 'stun:stun.l.google.com:19302'
+            }
+        ]
+    });
+    let log = msg => {
+        document.getElementById('div').innerHTML += msg + '<br>'
+    };
+
+    pc.ontrack = (event) => {
+        var el = document.createElement(event.track.kind);
+        el.srcObject = event.streams[0];
+        el.autoplay = true;
+        el.controls = true;
+        el.setAttribute('playsinline', '');
+
+        document.getElementById('remoteVideos').appendChild(el)
+    };
+
+    let dataChannel = pc.createDataChannel('foo');
+    dataChannel.onclose = () => console.log('dataChannel has closed');
+    dataChannel.onopen = () => {
+        console.log('dataChannel has opened');
+        document.getElementById('sendCommand').disabled = "";
+    };
+    dataChannel.onmessage = e => log(`Message from DataChannel '${dataChannel.label}' payload '${e.data}'`);
+
+    window.onbeforeunload = () => {
+        dataChannel.close();
+        pc.close();
+    };
+
+    let params = new URLSearchParams(document.location.search.substring(1));
+    let session_id = params.get("session");
+
+    pc.oniceconnectionstatechange = (e) => {
+        log('ice connection state: ' + pc.iceConnectionState);
+    };
+
+    pc.onnegotiationneeded = (e) => {
+        log('negotiation needed: ' + pc.iceConnectionState);
+    };
+
+    pc.onconnectionstatechange = (e) => {
+        log('connection state: ' + pc.connectionState);
+    };
+
+    pc.onicecandidate = event => {
+        if (event.candidate === null) {
+            document.getElementById('startSession').disabled = "";
+        }
+    };
+
+    // Offer to receive 1 audio, and 2 video tracks
+    pc.addTransceiver('audio', {'direction': 'recvonly'});
+    pc.addTransceiver('video', {'direction': 'recvonly'});
+    pc.addTransceiver('video', {'direction': 'recvonly'});
+    pc.createOffer().then(d => pc.setLocalDescription(d)).catch(log);
+
     window.startSession = () => {
-        document.getElementById('startSession').disabled = "true";
+        fetch(`https://webrtc-sdp-exchanger.appspot.com/sessions/${session_id}`, {
+            method: "POST",
+            mode: "cors",
+            headers: new Headers({"Content-Type": "application/json; charset=utf-8"}),
+            body: JSON.stringify({session_description: pc.localDescription, session_id: session_id}),
+        }).then((response) => {
+            console.log(response);
 
-        let pc = new RTCPeerConnection({
-            iceServers: [
-                {
-                    urls: 'stun:stun.l.google.com:19302'
+            fetch(`https://webrtc-sdp-exchanger.appspot.com/sessions/${session_id}/answer`, {
+                method: "GET",
+                mode: "cors",
+                headers: new Headers({"Content-Type": "application/json; charset=utf-8"}),
+            }).then((response) => {
+                if (response.ok) {
+                    return response.json();
                 }
-            ]
-        });
-        let log = msg => {
-            document.getElementById('div').innerHTML += msg + '<br>'
-        };
+                return Promise.reject(new Error("invalid response"));
+            }).then((json) => {
+                console.log("catch session desc");
+                try {
+                    pc.setRemoteDescription(new RTCSessionDescription(json.session_description));
+                } catch (e) {
+                    alert(e);
+                }
 
-        pc.ontrack = (event) => {
-            var el = document.createElement(event.track.kind);
-            el.srcObject = event.streams[0];
-            el.autoplay = true;
-            el.controls = true;
+                document.getElementById('startSession').disabled = "true";
+            }).catch(err => console.error);
 
-            document.getElementById('remoteVideos').appendChild(el)
-        };
+        }).catch(err => console.error);
+    };
 
-        let dataChannel = pc.createDataChannel('foo');
-        dataChannel.onclose = () => console.log('dataChannel has closed');
-        dataChannel.onopen = () => {
-            console.log('dataChannel has opened');
-            document.getElementById('sendCommand').disabled = "";
-        };
-        dataChannel.onmessage = e => log(`Message from DataChannel '${dataChannel.label}' payload '${e.data}'`);
+    window.sendCommand = () => {
+        let message = document.getElementById('command').value;
+        if (message === '') {
+            return;
+        }
 
-        window.onbeforeunload = () => {
-            dataChannel.close();
-            pc.close();
-        };
-
-        let params = new URLSearchParams(document.location.search.substring(1));
-        let session_id = params.get("session");
-
-        pc.oniceconnectionstatechange = (e) => {
-            log('ice connection state: ' + pc.iceConnectionState);
-            if (pc.iceConnectionState === 'checking') {
-                fetch(`https://webrtc-sdp-exchanger.appspot.com/sessions/${session_id}/answer`, {
-                    method: "GET",
-                    mode: "cors",
-                    headers: new Headers({"Content-Type": "application/json; charset=utf-8"}),
-                }).then((response) => {
-                    if (response.ok) {
-                        return response.json();
-                    }
-                    return Promise.reject(new Error("invalid response"));
-                }).then((json) => {
-                    console.log("catch session desc");
-                    try {
-                        pc.setRemoteDescription(new RTCSessionDescription(json.session_description));
-                    } catch (e) {
-                        alert(e);
-                    }
-                }).catch(err => console.error);
-            }
-        };
-
-        pc.onconnectionstatechange = (e) => {
-            log('connection state: ' + pc.connectionState);
-        };
-
-        pc.onicecandidate = event => {
-            if (event.candidate === null) {
-                fetch(`https://webrtc-sdp-exchanger.appspot.com/sessions/${session_id}`, {
-                    method: "POST",
-                    mode: "cors",
-                    headers: new Headers({"Content-Type": "application/json; charset=utf-8"}),
-                    body: JSON.stringify({session_description: pc.localDescription, session_id: session_id}),
-                }).then((response) => console.log).catch(err => console.error);
-            }
-        };
-
-        // Offer to receive 1 audio, and 2 video tracks
-        pc.addTransceiver('audio', {'direction': 'recvonly'});
-        pc.addTransceiver('video', {'direction': 'recvonly'});
-        pc.addTransceiver('video', {'direction': 'recvonly'});
-        pc.createOffer().then(d => pc.setLocalDescription(d)).catch(log);
-
-
-        window.sendCommand = () => {
-            let message = document.getElementById('command').value;
-            if (message === '') {
-                return;
-            }
-
-            dataChannel.send(message + '\n');
-            document.getElementById('command').value = "";
-        };
-    }
+        dataChannel.send(message + '\n');
+        document.getElementById('command').value = "";
+    };
 </script>
 <div>
-<button id="startSession" onclick="window.startSession()"> Start Session</button>
+<button id="startSession" disabled="true" onclick="window.startSession()"> Start Session</button>
 </div>
 
 <div>
