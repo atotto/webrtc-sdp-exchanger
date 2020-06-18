@@ -5,7 +5,7 @@ go 1.12
 replace github.com/atotto/webrtc-sdp-exchanger => ./
 
 require (
-	cloud.google.com/go v0.58.0
+	cloud.google.com/go v0.58.0 // indirect
 	cloud.google.com/go/firestore v1.2.0
 	firebase.google.com/go v3.8.1+incompatible
 	github.com/akutz/memconn v0.1.0
@@ -18,5 +18,4 @@ require (
 	golang.org/x/tools v0.0.0-20200612220849-54c614fe050c // indirect
 	google.golang.org/genproto v0.0.0-20200612171551-7676ae05be11
 	google.golang.org/grpc v1.29.1
-	gopkg.in/resty.v1 v1.12.0 // indirect
 )
