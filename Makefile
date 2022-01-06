@@ -8,5 +8,8 @@ gen:
 clean:
 	rm -f apis/*\.pb*\.go
 
+run:
+	GOOGLE_CLOUD_PROJECT=webrtc-sdp-exchanger go run main.go
+
 deploy:
 	gcloud app deploy --project webrtc-sdp-exchanger -q
