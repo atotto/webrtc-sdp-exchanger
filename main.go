@@ -15,7 +15,7 @@ import (
 	"github.com/akutz/memconn"
 	"github.com/atotto/webrtc-sdp-exchanger/apis"
 	"github.com/atotto/webrtc-sdp-exchanger/service"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"
 	"go.opencensus.io/plugin/ocgrpc"
 	"google.golang.org/grpc"
