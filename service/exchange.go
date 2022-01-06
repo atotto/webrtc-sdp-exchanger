@@ -9,9 +9,9 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var _ apis.ExchangeServiceServer = (*ExchangeService)(nil)
-
 type ExchangeService struct {
+	apis.UnimplementedExchangeServiceServer
+
 	fsClient          *firestore.Client
 	sessionCollection *firestore.CollectionRef
 }
