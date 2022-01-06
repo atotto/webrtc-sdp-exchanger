@@ -5,5 +5,8 @@ gen:
 			--grpc-gateway_out=. \
 			apis/exchange.proto
 
+clean:
+	rm -f apis/*\.pb*\.go
+
 deploy:
 	gcloud app deploy --project webrtc-sdp-exchanger -q
