@@ -19,6 +19,7 @@ import (
 	"github.com/rs/cors"
 	"go.opencensus.io/plugin/ocgrpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -56,7 +57,7 @@ func main() {
 
 	conn, err := grpc.Dial(
 		"grpc",
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
 			return memconn.DialContext(ctx, "memu", addr)
 		}),
